@@ -670,7 +670,7 @@ function loadSettlement(id){
   $('plSub').textContent=S.sub+' · '+S.unit;
   stage.setAttribute('aria-label','3D cutaway of the '+S.name);
   setSpin(spinMult);
-  renderOverview();
+  renderOverview();updStepper();
   try{if(location.hash!=='#'+S.id)history.replaceState(null,'','#'+S.id);}catch(e){}
 }
 function viewW(id){const v=world.views[id]||world.views.overview;return{cam:world.root.localToWorld(v.cam.clone()),tgt:world.root.localToWorld(v.tgt.clone())};}
@@ -698,6 +698,7 @@ function select(id){
     else flyTo(viewW('overview'));
     updateLabelClasses();}
   if(id)renderPart(id);else renderOverview();
+  updStepper();
 }
 
 /* ================================================================== */
@@ -723,7 +724,7 @@ function measure(){const narrow=stage.clientWidth<640;Object.values(LBL).forEach
 function updateLabelClasses(){Object.keys(LBL).forEach(id=>{const L=LBL[id],on=id===state.sel,dim=state.sel&&!on;L.el.classList.toggle('on',on);L.el.classList.toggle('dim',!!dim);L.g.setAttribute('class',on?'on':(dim?'dim':''));});}
 let tmp;
 function layoutLabels(){
-  const W=stage.clientWidth,H=stage.clientHeight;if(!W||!H)return;const top=Math.min(110,H*.22),bottom=H-(W<640?64:60),gap=W<640?6:8,mx=W<640?10:16,items=[];
+  const W=stage.clientWidth,H=stage.clientHeight;if(!W||!H)return;const dockEl=$('stage').querySelector('.dock'),top=Math.min(110,H*.22),bottom=H-(dockEl?dockEl.offsetHeight+24:(W<640?64:60)),gap=W<640?6:8,mx=W<640?10:16,items=[];
   S.order.forEach(id=>{
     const L=LBL[id];if(!L)return;
     const shieldHidden=!showShield&&S.hasShield&&(id==='shield');
@@ -745,6 +746,25 @@ function layoutLabels(){
   });
 }
 
+
+/* ---- component stepper (prev / next on the stage) ---- */
+function stepSeq(){return [null].concat(S.order);}
+function stepBy(d){const seq=stepSeq(),i=seq.indexOf(state.sel),n=seq.length;select(seq[((i<0?0:i)+d+n)%n]);}
+function updStepper(){
+  if(!S||!$('stName'))return;
+  const id=state.sel,n=S.order.length;
+  if(id){const i=S.order.indexOf(id),p=S.parts[id],sl=sysList(),si=sl.findIndex(x=>x[0]===p.sys);
+    $('stIdx').textContent=`${code(i)} / ${code(n-1)}`+(si>=0?` \u00b7 S${si+1} ${SYS[p.sys].name}`:'');$('stName').textContent=p.name;}
+  else{$('stIdx').textContent=`Overview \u00b7 ${n} components`;$('stName').textContent=S.name;}
+  $('stage').querySelector('.stepper').classList.toggle('on',!!id);
+}
+$('stPrev').onclick=()=>stepBy(-1);$('stNext').onclick=()=>stepBy(1);
+$('stCur').onclick=()=>{if(matchMedia('(max-width:900px)').matches)panel.scrollIntoView({behavior:'smooth',block:'start'});};
+document.addEventListener('keydown',e=>{
+  if(document.documentElement.dataset.mode!=='app'||e.altKey||e.ctrlKey||e.metaKey)return;
+  const t=e.target;if(t&&(t.tagName==='INPUT'||t.tagName==='TEXTAREA'||t.tagName==='SELECT'||t.isContentEditable))return;
+  if(e.key==='ArrowRight'||e.key===']'){e.preventDefault();stepBy(1);}else if(e.key==='ArrowLeft'||e.key==='['){e.preventDefault();stepBy(-1);}
+});
 /* ================================================================== */
 /*  HUD controls and picking                                           */
 /* ================================================================== */
