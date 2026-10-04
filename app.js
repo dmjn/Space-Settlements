@@ -1,3 +1,98 @@
+/* ================================================================== */
+/*  Paintings: NASA Ames space colony art, 1975-1978 (public domain)   */
+/*  Images are served by Wikimedia Commons.                            */
+/* ================================================================== */
+const WT='https://thumb.wikimedia.org/wikipedia/commons/thumb/',WU='https://upload.wikimedia.org/wikipedia/commons/',WP='https://commons.wikimedia.org/wiki/File:';
+function wm(path,file,big){const f=file;return{s:WT+path+'/'+f+'/960px-'+f,b:big===true?WU+path+'/'+f:WT+path+'/'+f+'/1920px-'+f,o:WU+path+'/'+f,page:WP+f};}
+const ART={
+  'torus-ext':Object.assign(wm('1/1d','Artist_rendering_Torus_Sphere_%28ARC-1976-AC76-0525%29.jpg'),{t:'The Stanford Torus and neighboring colonies',a:'Don Davis',y:'1976',id:'AC76-0525',w:3204,h:2210,d:'Exterior view, with the large non-rotating mirror above the hub and other colonies in the distance.'}),
+  'torus-int':Object.assign(wm('3/3f','Torus_sphere_Interior_view_%28ARC-1975-AC75-2621%29.jpg'),{t:'Inside the Stanford Torus',a:'Don Davis',y:'1975',id:'AC75-2621',w:3393,h:2604,d:'The valley of the habitat ring, with terraced housing on the side walls and the ring curving up into the sky.'}),
+  'torus-cut':Object.assign(wm('e/e1','Stanford_Torus_cutaway.jpg'),{t:'Cutaway of the torus',a:'Rick Guidice',y:'1975',id:'AC75-1086-1',w:5725,h:4517,d:'A section of the rim opened to show the residential valley and the stacked farm decks.'}),
+  'torus-constr':Object.assign(wm('9/93','Stanford_Torus_construction.jpg'),{t:'Building the rim',a:'Don Davis',y:'1975',id:'AC75-1886',w:5737,h:4524,d:'Panels of the rim being fitted in place by small assembly craft the study called ANTS, assembly non-tethered ships.'}),
+  'torus-chev':Object.assign(wm('7/73','Stanford_torus_under_construction.jpg',true),{t:'The torus with its shield unfinished',a:'Don Davis',y:'c. 1975',id:'',w:1800,h:1404,d:'Some of the chevron shielding over the windows is still missing, opening a view into the habitat.'}),
+  'torus-wheel':Object.assign({s:WT+'d/d5/NASA_Art_by_Rick_Guidice_The_Torus_Wheel_from_%27Space_Settlements%3B_A_Design_Study%27_in_colonization_sponsored_by_NASA_Ames%2C_ASEE_and_Stanford_University_in_the_summer_of_1975_to_look_at_all_aspects_of_sustained_life_%28ARC-1976-AC76-1267%29.jpg/960px-thumbnail.jpg',b:WT+'d/d5/NASA_Art_by_Rick_Guidice_The_Torus_Wheel_from_%27Space_Settlements%3B_A_Design_Study%27_in_colonization_sponsored_by_NASA_Ames%2C_ASEE_and_Stanford_University_in_the_summer_of_1975_to_look_at_all_aspects_of_sustained_life_%28ARC-1976-AC76-1267%29.jpg/1920px-thumbnail.jpg',o:WU+'d/d5/NASA_Art_by_Rick_Guidice_The_Torus_Wheel_from_%27Space_Settlements%3B_A_Design_Study%27_in_colonization_sponsored_by_NASA_Ames%2C_ASEE_and_Stanford_University_in_the_summer_of_1975_to_look_at_all_aspects_of_sustained_life_%28ARC-1976-AC76-1267%29.jpg',page:WP+'NASA_Art_by_Rick_Guidice_The_Torus_Wheel_from_%27Space_Settlements;_A_Design_Study%27_in_colonization_sponsored_by_NASA_Ames,_ASEE_and_Stanford_University_in_the_summer_of_1975_to_look_at_all_aspects_of_sustained_life_(ARC-1976-AC76-1267).jpg'},{t:'The Torus Wheel',a:'Rick Guidice',y:'1976',id:'AC76-1267',w:1990,h:2608,d:'The wheel and its tilted mirror, painted for the publication of the 1975 summer study.'}),
+  'bernal-ext':Object.assign(wm('c/c8','Bernal_sphere_exterior.jpg'),{t:'The Bernal sphere',a:'Rick Guidice',y:'1976',id:'AC76-0965',w:5688,h:4109,d:'The residential sphere, with farming rings beside it, mirrors that reflect sunlight into both, and flat radiator panels.'}),
+  'bernal-int':Object.assign(wm('0/02','Bernal_sphere_interior.jpg'),{t:'Inside the sphere',a:'Rick Guidice',y:'1976',id:'AC76-0628',w:5716,h:4247,d:'Gravity is strongest along the equator and fades toward the axis, where people fly under their own power.'}),
+  'bernal-cut':Object.assign(wm('b/b8','Bernal_sphere_cutaway.jpg'),{t:'Cutaway of the Bernal sphere',a:'Rick Guidice',y:'1976',id:'AC76-1089',w:5732,h:4515,d:'An exterior view looking into the opened sphere, with terraced land rising from the equator.'}),
+  'bernal-constr':Object.assign(wm('9/9f','Bernal_sphere_construction.jpg'),{t:'The sphere under construction',a:'Don Davis',y:'1976',id:'AC76-1288',w:4496,h:5716,d:'Construction crews at work on the shell of a Bernal sphere.'}),
+  'cyl-ext':Object.assign(wm('1/16','Spacecolony1.jpg'),{t:'A pair of cylinder colonies',a:'Rick Guidice',y:'1975',id:'AC75-1085',w:5728,h:4187,d:'Two cylinders with their long mirrors opened, ringed by agricultural modules.'}),
+  'cyl-int':Object.assign(wm('9/94','Spacecolony3edit.jpeg'),{t:'Inside a cylinder',a:'Rick Guidice',y:'1975',id:'AC75-1086',w:5732,h:4515,d:'A valley between two window stripes, with the other valleys overhead.'}),
+  'cyl-cap':Object.assign(wm('3/3a','Spacecolony4.jpeg',true),{t:'Endcap view with suspension bridge',a:'Don Davis',y:'1975',id:'AC75-1883',w:1884,h:1473,d:'Looking down the length of the cylinder from the end cap, with land and windows alternating.'}),
+  'cyl-eclipse':Object.assign(wm('f/fc','Island_three_eclipse.jpg'),{t:'Eclipse',a:'Don Davis',y:'1975',id:'AC75-1920',w:4512,h:5728,d:'The Sun eclipsed by Earth, seen through a window stripe, with clouds and vegetation inside.'}),
+  'cyl-many':Object.assign(wm('5/5a','Exterior_View_%28ARC-1975-AC75-1921%29.jpg',true),{t:'Cylinder colonies aimed at the Sun',a:'NASA Ames',y:'1975',id:'AC75-1921',w:1556,h:2292,d:'Several pairs of cylinders, each kept pointing at the Sun.'}),
+  'cyl-farm':Object.assign(wm('f/ff','Interior_View_of_Colony_from_Overhead_%28ARC-1975-AC75-1922%29.jpg'),{t:'Interior view from overhead',a:'NASA Ames',y:'1975',id:'AC75-1922',w:2256,h:1496,d:'NASA’s caption: farming sections built in terraces, with different crops grown on each level.'}),
+  'moon-equip':Object.assign(wm('7/7d','View_of_Moon_of_Equipment_%28transmitters%29_%28ARC-1975-AC75-1923%29.jpg'),{t:'Equipment on the Moon',a:'NASA Ames',y:'1975',id:'AC75-1923',w:2268,h:893,d:'A lander and surface installations at a lunar base, with Earth above the horizon.'}),
+  'lunar-base':Object.assign(wm('0/02','ARTIST-_RICK_GUIDICE_SPACE_COLONIZATION%2C_MANUFACTURING%2C_HABITAT_AND_LUNAR_BASE_%28ARTWORK%29_%28ARC-1978-AC78-0330-1%29.jpg'),{t:'Manufacturing, habitat and lunar base',a:'Rick Guidice',y:'1978',id:'AC78-0330-1',w:2484,h:1616,d:'Painted for a later Ames summer study of lunar bases and space manufacturing.'}),
+  'shuttle':Object.assign(wm('5/55','Shuttle_Service_%28view_of_spacecraft%29_%28ARC-1975-AC75-1917%29.jpg'),{t:'Shuttle service',a:'NASA Ames',y:'1975',id:'AC75-1917',w:2316,h:1568,d:'A space shuttle delivers a part for a colony.'}),
+  'build1':Object.assign(wm('e/ec','Artist-_Rick_Guidice_Building_a_Space_Colony_%28ARC-1976-AC76-0296%29.jpg'),{t:'Building a space colony',a:'Rick Guidice',y:'1976',id:'AC76-0296',w:2352,h:1695,d:'A sphere and its mirror in construction.'}),
+  'build2':Object.assign(wm('0/0d','Artist-_Rick_Guidice_Building_a_Space_Colony_%28ARC-1976-AC76-0297%29.jpg'),{t:'Building a space colony',a:'Rick Guidice',y:'1976',id:'AC76-0297',w:2221,h:1588,d:'A construction worker in space, from the same series.'}),
+  'sps':Object.assign(wm('1/16','Solar_power_satellite_from_an_asteroid.jpg',true),{t:'Asteroid mining mission',a:'Denise Watt',y:'1977',id:'S78-27139',w:1024,h:789,d:'Painted for a NASA-sponsored study of mining Earth-approaching asteroids for space industry.'})
+};
+/* which painting goes with which sheet */
+const ART_FOR={
+  torus:{overview:['torus-ext'],habitat:['torus-int'],agriculture:['torus-cut'],windows:['torus-chev'],shield:['torus-constr'],mirror:['torus-wheel']},
+  bernal:{overview:['bernal-ext'],valley:['bernal-int'],shell:['bernal-constr'],windows:['bernal-cut']},
+  island2:{overview:['bernal-cut']},
+  oneill:{overview:['cyl-ext'],land:['cyl-int'],caps:['cyl-cap'],windows:['cyl-eclipse'],pair:['cyl-many'],agring:['cyl-farm']},
+  model1:{},
+  economy:['sps'],energy:['sps'],massdriver:['moon-equip','lunar-base'],build:['build1','torus-constr','bernal-constr','shuttle']
+};
+const ART_NOTE={island2:{overview:'Painted for Island One. O’Neill’s Island Two is the same sphere at about four times the diameter.'}};
+function artFig(key,note,cls){
+  const A=ART[key];if(!A)return '';
+  return `<figure class="art${cls?' '+cls:''}"><button type="button" class="artopen" data-art="${key}" aria-label="Enlarge: ${A.t}"><img src="${A.s}" alt="${A.t}. ${A.d}" loading="lazy" decoding="async" width="${A.w}" height="${A.h}" onerror="artFail(this)"></button>
+  <figcaption><b>${A.t}</b><span>${A.a} · ${A.y}${A.id?' · NASA '+A.id:''}</span>${note?`<em>${note}</em>`:''}</figcaption></figure>`;
+}
+function artFail(img){if(!img.dataset.tried){img.dataset.tried=1;const k=img.closest('[data-art]');const A=k&&ART[k.dataset.art];if(A&&A.o&&img.src!==A.o){img.src=A.o;return;}}const f=img.closest('figure');if(f)f.remove();}
+function artFor(set,part){const m=ART_FOR[set];return (m&&m[part])||[];}
+function artBlock(set,part){const ks=artFor(set,part);if(!ks.length)return '';const n=(ART_NOTE[set]||{})[part];return `<div class="artset">${ks.map(k=>artFig(k,n)).join('')}</div>`;}
+/* lightbox */
+const LB=document.createElement('div');LB.className='lightbox';LB.hidden=true;LB.setAttribute('role','dialog');LB.setAttribute('aria-modal','true');LB.setAttribute('aria-label','Painting');
+LB.innerHTML='<button type="button" class="lbx" aria-label="Close">×</button><figure><img alt=""><figcaption></figcaption></figure>';
+document.body.appendChild(LB);
+let lbLast=null;
+function artOpen(key){const A=ART[key];if(!A)return;lbLast=document.activeElement;const img=LB.querySelector('img');img.src=A.s;img.alt=A.t;const big=new Image();big.onload=()=>{if(LB.dataset.k===key)img.src=A.b;};big.src=A.b;LB.dataset.k=key;
+  LB.querySelector('figcaption').innerHTML=`<b>${A.t}</b> ${A.d} <span>${A.a}, ${A.y}${A.id?', NASA '+A.id:''}. Public domain. <a href="${A.page}" target="_blank" rel="noopener">Wikimedia Commons</a> · <a href="${A.o}" target="_blank" rel="noopener">full resolution (${A.w}×${A.h})</a></span>`;
+  LB.hidden=false;document.documentElement.classList.add('lbon');LB.querySelector('.lbx').focus();}
+function artClose(){LB.hidden=true;document.documentElement.classList.remove('lbon');if(lbLast&&lbLast.focus)lbLast.focus();}
+LB.addEventListener('click',e=>{if(e.target===LB||e.target.closest('.lbx'))artClose();});
+document.addEventListener('keydown',e=>{if(!LB.hidden&&e.key==='Escape'){e.stopPropagation();artClose();}},true);
+document.addEventListener('click',e=>{const b=e.target.closest('.artopen');if(b){e.preventDefault();artOpen(b.dataset.art);}});
+/* topic pages: a row of paintings under the lede */
+function artPage(id){const sec=document.getElementById('p-'+id);if(!sec||sec.querySelector('.artrow'))return;const ks=ART_FOR[id];if(!ks||!ks.length)return;
+  const lede=sec.querySelector('.prose.wide');const d=document.createElement('div');d.className='artrow';d.innerHTML=ks.map(k=>artFig(k)).join('');(lede||sec.firstElementChild).insertAdjacentElement('afterend',d);}
+/* intro gallery */
+(function(){const g=document.getElementById('i-artgal');if(!g)return;
+  const pick=[['torus-int','torus'],['torus-cut','torus'],['bernal-int','bernal'],['bernal-ext','bernal'],['cyl-int','oneill'],['cyl-cap','oneill'],['cyl-eclipse','oneill'],['torus-constr','build'],['build1','build'],['moon-equip','massdriver']];
+  g.innerHTML=pick.map(([k,go])=>artFig(k,'',`go-${go}`)).join('');})();
+
+/* ================================================================== */
+/*  Looks: the default atlas, and two looks after the painters        */
+/* ================================================================== */
+const THEMES={atlas:{name:'Atlas',bg:0x060a13},davis:{name:'Davis',bg:0x050a1c},guidice:{name:'Guidice',bg:0x2a0f22}};
+let themeNow='atlas';
+try{const t=localStorage.getItem('ss-theme');if(t&&THEMES[t])themeNow=t;}catch(e){}
+function themeUI(){return `<div class="looks" role="group" aria-label="Look">${Object.keys(THEMES).map(k=>`<button type="button" data-theme-set="${k}" aria-pressed="${k===themeNow}">${THEMES[k].name}</button>`).join('')}</div>`;}
+function setTheme(k){if(!THEMES[k])return;themeNow=k;document.documentElement.dataset.theme=k;try{localStorage.setItem('ss-theme',k);}catch(e){}
+  document.querySelectorAll('[data-theme-set]').forEach(b=>b.setAttribute('aria-pressed',b.dataset.themeSet===k));themeScene();
+  document.querySelectorAll('meta[name="theme-color"]').forEach(m=>m.content='#'+THEMES[k].bg.toString(16).padStart(6,'0'));}
+const THEME_SKY={
+  davis:{sun:0xffd7a0,stops:[[0,'#0d1d46'],[.55,'#060d24'],[1,'#02040b']],glow:[.82,.12,'rgba(242,182,92,.28)'],glow2:[.1,.95,'rgba(70,110,190,.18)']},
+  guidice:{sun:0xffc2a8,stops:[[0,'#5a1a44'],[.45,'#2c0f27'],[1,'#120817']],glow:[.15,.9,'rgba(255,120,90,.30)'],glow2:[.9,.1,'rgba(244,184,200,.18)']}
+};
+const skyCache={};
+function skyTex(k){if(skyCache[k])return skyCache[k];const S=THEME_SKY[k],c=document.createElement('canvas');c.width=512;c.height=512;const g=c.getContext('2d');
+  const lg=g.createLinearGradient(0,0,0,512);S.stops.forEach(([o,col])=>lg.addColorStop(o,col));g.fillStyle=lg;g.fillRect(0,0,512,512);
+  [S.glow,S.glow2].forEach(([x,y,col])=>{const rg=g.createRadialGradient(x*512,y*512,0,x*512,y*512,330);rg.addColorStop(0,col);rg.addColorStop(1,'rgba(0,0,0,0)');g.fillStyle=rg;g.fillRect(0,0,512,512);});
+  if(k==='guidice'){for(let i=0;i<900;i++){g.fillStyle=`rgba(255,${120+Math.random()*80|0},${140+Math.random()*80|0},${Math.random()*.10})`;const r=Math.random()*2.2;g.fillRect(Math.random()*512,Math.random()*512,r,r);}}
+  const t=new THREE.CanvasTexture(c);skyCache[k]=t;return t;}
+function themeScene(){const X=window.__ss3;if(!X||!X.scene)return;const scene=X.scene,sunLight=X.sunLight;
+  if(THEME_SKY[themeNow]){scene.background=skyTex(themeNow);if(sunLight)sunLight.color.setHex(THEME_SKY[themeNow].sun);}
+  else{scene.background=new THREE.Color(THEMES.atlas.bg);if(sunLight)sunLight.color.setHex(0xfff0d8);}}
+document.documentElement.dataset.theme=themeNow;
+document.querySelectorAll('.ibar').forEach(b=>b.insertAdjacentHTML('beforeend',themeUI()));
+document.addEventListener('click',e=>{const b=e.target.closest('[data-theme-set]');if(b)setTheme(b.dataset.themeSet);});
+
 (function(){
 'use strict';
 /* ================================================================== */
@@ -720,11 +815,11 @@ function buildLabels(){
   measure();updateLabelClasses();
 }
 const code=i=>String(i+1).padStart(2,'0');
-function measure(){const narrow=stage.clientWidth<640;Object.values(LBL).forEach(L=>{L.el.querySelector('.t').hidden=narrow;L.w=L.el.offsetWidth;L.h=L.el.offsetHeight;});}
+function measure(){const narrow=$('vp').clientWidth<640;Object.values(LBL).forEach(L=>{L.el.querySelector('.t').hidden=narrow;L.w=L.el.offsetWidth;L.h=L.el.offsetHeight;});}
 function updateLabelClasses(){Object.keys(LBL).forEach(id=>{const L=LBL[id],on=id===state.sel,dim=state.sel&&!on;L.el.classList.toggle('on',on);L.el.classList.toggle('dim',!!dim);L.g.setAttribute('class',on?'on':(dim?'dim':''));});}
 let tmp;
 function layoutLabels(){
-  const W=stage.clientWidth,H=stage.clientHeight;if(!W||!H)return;const dockEl=$('stage').querySelector('.dock'),top=Math.min(110,H*.22),bottom=H-(dockEl?dockEl.offsetHeight+24:(W<640?64:60)),gap=W<640?6:8,mx=W<640?10:16,items=[];
+  const vpEl=$('vp'),W=vpEl.clientWidth,H=vpEl.clientHeight;if(!W||!H)return;const dockEl=$('stage').querySelector('.dock'),dockOver=dockEl&&getComputedStyle(dockEl).position==='absolute',top=Math.min(110,H*.22),bottom=H-(dockOver?dockEl.offsetHeight+24:12),gap=W<640?6:8,mx=W<640?10:16,items=[];
   S.order.forEach(id=>{
     const L=LBL[id];if(!L)return;
     const shieldHidden=!showShield&&S.hasShield&&(id==='shield');
@@ -796,7 +891,7 @@ canvas.addEventListener('pointerleave',()=>{hoverPending=null;if(state.hover){st
 /* ================================================================== */
 let sysCleanup=null;
 function cleanupSys(){if(sysCleanup){sysCleanup();sysCleanup=null;}}
-function switcher(){return `<nav class="sets" aria-label="Settlements">${SET_ORDER.map(k=>{const s=SETTLEMENTS[k];return `<button type="button" data-set="${k}" aria-current="${k===S.id}"><b>${s.name}</b><small>${s.year} · ${s.compare.size}</small></button>`;}).join('')}<button type="button" data-home><b>← Introduction</b><small>topics · all habitats</small></button></nav>`;}
+function switcher(){return `<nav class="sets" aria-label="Settlements">${SET_ORDER.map(k=>{const s=SETTLEMENTS[k];return `<button type="button" data-set="${k}" aria-current="${k===S.id}"><b>${s.name}</b><small>${s.year} · ${s.compare.size}</small></button>`;}).join('')}<button type="button" data-home><b>← Introduction</b><small>topics · all habitats</small></button></nav>${themeUI()}`;}
 function wireSwitcher(){panel.querySelectorAll('[data-home]').forEach(b=>b.addEventListener('click',()=>{location.hash='intro';}));panel.querySelectorAll('[data-set]').forEach(b=>b.addEventListener('click',()=>{if(b.dataset.set!==S.id)location.hash=b.dataset.set;}));}
 function sources(){return `<div class="src"><p><b>Space Settlements</b> · a Worldmaking Project atlas by Damjan Jovanovic.</p><p>Sources: ${S.sources.map(([t,u])=>`<a href="${u}" target="_blank" rel="noopener">${t}</a>`).join(' · ')}.</p><p>${S.schematic}</p></div>`;}
 function sysList(){const seen=[];S.order.forEach(id=>{const k=S.parts[id].sys;if(seen.indexOf(k)<0)seen.push(k);});return SYS_ORDER.filter(k=>seen.indexOf(k)>=0).map(k=>[k,S.order.find(id=>S.parts[id].sys===k)]);}
@@ -810,6 +905,7 @@ function renderOverview(){
   <p class="eyebrow">${S.eyebrow}</p>
   <h1>${S.name}</h1>
   <p class="lede">${S.lede}</p>
+  ${artBlock(S.id,'overview')}
   <p>Drag to orbit, scroll or pinch to zoom, and click any part of the settlement or any callout to open its sheet.</p>
   <dl class="figs">${S.figs.map(([k,v])=>`<div><dt>${k}</dt><dd>${v}</dd></div>`).join('')}</dl>
   <h2>Systems</h2>
@@ -832,6 +928,7 @@ function renderPart(id){
   <p class="eyebrow"><span class="code">${code(i)}</span>${p.kind}</p>
   <h1>${p.name}</h1>
   ${p.text.map(t=>`<p>${t}</p>`).join('')}
+  ${artBlock(S.id,id)}
   <table class="specs"><tbody>${p.specs.map(([k,v])=>`<tr><th scope="row">${k}</th><td>${v}</td></tr>`).join('')}</tbody></table>
   <section class="sys"><p class="eyebrow">System S${si+1} · How it works</p><h2>${SYS[p.sys].name}</h2><div id="sysroot"></div></section>
   <nav class="pn" aria-label="Components"><button type="button" id="prev"><small>Previous · ${code((i+n-1)%n)}</small>${S.parts[prev].name}</button><button type="button" id="next"><small>Next · ${code((i+1)%n)}</small>${S.parts[next].name}</button></nav>
@@ -1168,7 +1265,7 @@ $('tTour').onclick=()=>{if(tourI>=0)endTour();else{$('tTour').setAttribute('aria
 /* ================================================================== */
 /*  Loop and start                                                     */
 /* ================================================================== */
-function resize(){if(!renderer)return;const w=stage.clientWidth,h=stage.clientHeight;if(!w||!h)return;renderer.setSize(w,h,false);camera.aspect=w/Math.max(1,h);camera.updateProjectionMatrix();measure();}
+function resize(){if(!renderer)return;const w=$('vp').clientWidth,h=$('vp').clientHeight;if(!w||!h)return;renderer.setSize(w,h,false);camera.aspect=w/Math.max(1,h);camera.updateProjectionMatrix();measure();}
 let last=performance.now();
 function frame(now){
   const raw=Math.max(0,(now-last)/1000),dt=Math.min(.05,raw);last=now;
@@ -1418,6 +1515,7 @@ function showPage(id){
   htmlEl.dataset.mode='page';
   document.querySelectorAll('.tpage').forEach(p=>p.hidden=p.id!=='p-'+id);
   if(pageOn&&pageOn!==id&&PAGES[pageOn].stop)PAGES[pageOn].stop();
+  artPage(id);
   if(!inited_p[id]){inited_p[id]=true;PAGES[id].init();}else if(PAGES[id].start)PAGES[id].start();
   pageOn=id;window.scrollTo(0,0);
 }
@@ -1523,7 +1621,7 @@ function init3D(){
   if(HAS3D){
     try{
       tmp=new THREE.Vector3();ray=new THREE.Raycaster();ptr=new THREE.Vector2();
-      initScene();new ResizeObserver(resize).observe(stage);resize();
+      initScene();window.__ss3={scene,sunLight};themeScene();new ResizeObserver(resize).observe($('vp'));resize();
       if(document.fonts&&document.fonts.ready)document.fonts.ready.then(measure);
       requestAnimationFrame(frame);return;
     }catch(err){console.error(err);renderer=null;stage.insertAdjacentHTML('beforeend','<div class="fallback">3D view unavailable in this browser. The component sheets on the right still work.</div>');}

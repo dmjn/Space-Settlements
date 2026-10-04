@@ -12,6 +12,12 @@ The atlas opens five designs in realtime 3D cutaway, each with callouts, a part-
 
 It also covers the system around the habitats on five topic pages: the colony's economy, solar power satellites, the lunar mass driver, the construction timeline, and a habitat designer that tests a shape against the 1975 study's criteria.
 
+## Paintings and looks
+
+The habitat sheets, topic pages and the introduction show the space colony paintings NASA Ames commissioned between 1975 and 1978 from Don Davis, Rick Guidice and others. They are in the public domain and load from Wikimedia Commons; each caption gives the artist, year and NASA ID, and the enlarged view links to the source file at full resolution. If a painting cannot load, its figure is simply left out.
+
+The **Atlas / Davis / Guidice** switch in the header and the side panel changes the look of the whole atlas, including the sky behind the 3D views. The choice is remembered in the browser.
+
 ## Publishing on GitHub Pages
 
 1. Create a new repository, for example `space-settlements`.
