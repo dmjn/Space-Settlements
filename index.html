@@ -1,0 +1,643 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Space Settlements · A Worldmaking Project atlas</title>
+<meta name="description" content="An interactive atlas of the space settlement designs of 1969 to 1977: the Stanford Torus, Bernal sphere and O’Neill cylinders in realtime cutaway, with live systems diagrams and the economy, energy and industry meant to pay for them.">
+<meta name="author" content="Damjan Jovanovic">
+<meta name="theme-color" content="#060A13">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Space Settlements · A Worldmaking Project atlas">
+<meta property="og:description" content="An interactive atlas of the space settlement designs of 1969 to 1977: the Stanford Torus, Bernal sphere and O’Neill cylinders in realtime cutaway, with live systems diagrams and the economy, energy and industry meant to pay for them.">
+<meta property="og:image" content="og.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Space Settlements · A Worldmaking Project atlas">
+<meta name="twitter:description" content="An interactive atlas of the space settlement designs of 1969 to 1977: the Stanford Torus, Bernal sphere and O’Neill cylinders in realtime cutaway, with live systems diagrams and the economy, energy and industry meant to pay for them.">
+<meta name="twitter:image" content="og.png">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="fonts/fonts.css">
+<style>
+/* Layout: full-bleed 3D cutaway "plate" with margin callouts; a technical-manual side panel carries the part sheet and live system diagrams. */
+:root{
+  color-scheme: dark;
+  --space:#060A13;      /* viewport ground */
+  --ink:#0C1320;        /* panel */
+  --ink-2:#121B2C;      /* raised panel surfaces */
+  --line:#24324A;       /* rules and hairlines */
+  --text:#DCE5EE;
+  --muted:#8A99AE;
+  --ice:#A9CFE6;        /* callout linework */
+  --signal:#F2A541;     /* selection */
+  --o2:#7FD3E6; --co2:#E59F5A; --water:#6F9EEA; --food:#93C76D; --waste:#B48ACB; --n2:#55667F; --heat:#E3714F;
+  --display:"Chakra Petch", "Bahnschrift", "Arial Narrow", sans-serif;
+  --body:"IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+  --mono:"IBM Plex Mono", ui-monospace, "Cascadia Mono", Consolas, monospace;
+}
+html,body{height:100%}
+body{background:var(--space);color:var(--text);font:15px/1.55 var(--body);margin:0}
+#app{display:grid;grid-template-columns:minmax(0,1fr) 430px;height:100%}
+#stage{position:relative;overflow:hidden;min-height:0;min-width:0;background:var(--space)}
+#gl{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none;cursor:grab}
+#gl.hot{cursor:pointer}
+#leaders,#labels{position:absolute;left:0;top:0;width:100%;height:100%;pointer-events:none}
+#leaders polyline{fill:none;stroke:var(--ice);stroke-width:1;opacity:.75}
+#leaders circle{fill:var(--space);stroke:var(--ice);stroke-width:1.2}
+#leaders g.on polyline{stroke:var(--signal);opacity:1;stroke-width:1.4}
+#leaders g.on circle{stroke:var(--signal);fill:var(--signal)}
+#leaders g.dim{opacity:.35}
+.lbl{position:absolute;left:0;top:0;pointer-events:auto;background:none;border:0;padding:0 2px 3px;color:var(--ice);font:500 11px/1.2 var(--mono);text-transform:uppercase;letter-spacing:.08em;white-space:nowrap;cursor:pointer;text-shadow:0 0 6px var(--space),0 0 2px var(--space)}
+.lbl .n{color:var(--muted);margin-right:6px}
+.lbl:hover,.lbl:focus-visible{color:#fff;outline:none}
+.lbl.on{color:var(--signal)}
+.lbl.on .n{color:var(--signal)}
+.lbl.dim{opacity:.4}
+.lbl[hidden]{display:none!important}
+
+.plate{position:absolute;top:16px;left:16px;pointer-events:none;max-width:calc(100% - 32px);text-shadow:0 0 10px var(--space),0 0 3px var(--space)}
+.plate .eyebrow{margin:0 0 2px}
+.plate h1{font:600 clamp(24px,3.2vw,34px)/1 var(--display);letter-spacing:.04em;text-transform:uppercase;margin:0;color:#F3F6F9}
+.plate .sub{font:400 12px/1.4 var(--mono);color:var(--muted);margin-top:6px;letter-spacing:.04em}
+.eyebrow{font:500 11px/1.3 var(--mono);text-transform:uppercase;letter-spacing:.12em;color:var(--muted);margin:0 0 6px}
+.hud{position:absolute;left:16px;bottom:16px;display:flex;flex-wrap:wrap;gap:8px;align-items:center;max-width:calc(100% - 32px)}
+.seg{display:flex;border:1px solid var(--line);background:color-mix(in srgb,var(--ink) 85%,transparent)}
+.seg button,.tog{font:500 11px/1 var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--muted);background:color-mix(in srgb,var(--ink) 85%,transparent);border:0;padding:9px 10px;cursor:pointer}
+.seg button+button{border-left:1px solid var(--line)}
+.seg button[aria-pressed="true"],.tog[aria-pressed="true"]{color:var(--space);background:var(--ice)}
+.tog{border:1px solid var(--line)}
+.seg button:focus-visible,.tog:focus-visible,.btn:focus-visible,.back:focus-visible,.panel button:focus-visible{outline:2px solid var(--signal);outline-offset:2px}
+.spinchip{position:absolute;right:16px;bottom:16px;font:400 11px/1.4 var(--mono);color:var(--muted);text-align:right;letter-spacing:.04em;pointer-events:none}
+.spinchip b{color:var(--text);font-weight:500}
+
+#panel{background:var(--ink);border-left:1px solid var(--line);overflow-y:auto;min-width:0;padding:22px 24px 48px}
+#panel h1{font:600 30px/1.05 var(--display);text-transform:uppercase;letter-spacing:.03em;margin:0 0 14px;text-wrap:balance}
+#panel h2{font:600 15px/1.2 var(--display);text-transform:uppercase;letter-spacing:.08em;margin:28px 0 12px;color:var(--ice)}
+#panel p{margin:0 0 12px;max-width:62ch}
+#panel .lede{font-size:16px;color:var(--text)}
+.code{display:inline-block;color:var(--space);background:var(--signal);padding:1px 5px;margin-right:6px;font-weight:500}
+.figs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:1px;background:var(--line);border:1px solid var(--line);margin:18px 0 0}
+.figs div{background:var(--ink-2);padding:10px 10px 9px;min-width:0}
+.figs dt{font:500 10px/1.2 var(--mono);text-transform:uppercase;letter-spacing:.1em;color:var(--muted)}
+.figs dd{margin:4px 0 0;font:600 18px/1.1 var(--display);letter-spacing:.02em;font-variant-numeric:tabular-nums}
+.syslist,.partlist{list-style:none;margin:0;padding:0;display:grid;gap:1px;background:var(--line);border:1px solid var(--line)}
+.syslist button,.partlist button{display:grid;grid-template-columns:auto 1fr;gap:2px 12px;width:100%;text-align:left;background:var(--ink-2);border:0;color:var(--text);padding:10px 12px;cursor:pointer;font:inherit}
+.syslist button:hover,.partlist button:hover{background:#18233A}
+.syslist .ix,.partlist .ix{font:500 11px/1.5 var(--mono);color:var(--signal);grid-row:span 2}
+.syslist .nm,.partlist .nm{font:500 14px/1.3 var(--body)}
+.syslist small,.partlist small{color:var(--muted);font-size:12.5px;line-height:1.35}
+.back{background:none;border:0;color:var(--muted);font:500 11px/1 var(--mono);letter-spacing:.08em;text-transform:uppercase;padding:4px 0;margin:0 0 16px;cursor:pointer}
+.back:hover{color:var(--text)}
+.specs{width:100%;border-collapse:collapse;margin:16px 0 4px;font-size:13.5px}
+.specs th,.specs td{text-align:left;padding:7px 0;border-top:1px solid var(--line);vertical-align:top}
+.specs th{font:500 10.5px/1.6 var(--mono);text-transform:uppercase;letter-spacing:.08em;color:var(--muted);width:44%;padding-right:12px}
+.specs td{font-variant-numeric:tabular-nums}
+.sys{margin-top:26px;padding-top:4px;border-top:2px solid var(--ice)}
+.sys .eyebrow{margin-top:14px}
+.sys h2{margin-top:2px!important}
+.ctrl{display:grid;grid-template-columns:1fr auto;gap:2px 10px;margin:10px 0 4px;align-items:center}
+.ctrl label{font:500 11px/1.3 var(--mono);text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}
+.ctrl output{font:500 13px/1 var(--mono);color:var(--signal);font-variant-numeric:tabular-nums}
+.ctrl input{grid-column:1/-1;width:100%;accent-color:var(--signal)}
+.plot{width:100%;height:auto;display:block;margin:10px 0 6px;overflow:visible}
+.plot text{font-family:var(--mono)}
+.plot .grid{stroke:var(--line);stroke-width:1}
+.plot .tick{fill:var(--muted);font-size:9px}
+.plot .axis{fill:var(--muted);font-size:9px;letter-spacing:.04em}
+.plot .band{fill:var(--o2);opacity:.12}
+.plot .bandt{fill:var(--o2);font-size:8.5px}
+.plot .ref{stroke:var(--n2);stroke-width:1}
+.plot .reft{fill:var(--muted);font-size:8.5px}
+.plot .cur{stroke:var(--signal);stroke-width:2.2;fill:none}
+.plot .mark{stroke:var(--ice);stroke-dasharray:3 3;stroke-width:1}
+.plot .markt{fill:var(--ice);font-size:8.5px}
+.plot .dot{fill:var(--signal);stroke:var(--space);stroke-width:2}
+.plot .lbl2{fill:var(--text);font-size:9.5px}
+.plot .lblm{fill:var(--muted);font-size:8.5px}
+.readout{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:1px;background:var(--line);border:1px solid var(--line);margin:10px 0 12px}
+.readout div{background:var(--ink-2);padding:8px 10px;min-width:0}
+.readout dt{font:500 10px/1.3 var(--mono);text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}
+.readout dd{margin:3px 0 0;font:500 15px/1.2 var(--mono);font-variant-numeric:tabular-nums}
+.note{font-size:13.5px;color:var(--muted)}
+.btnrow{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0}
+.btn{font:500 11px/1 var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--text);background:var(--ink-2);border:1px solid var(--line);padding:9px 11px;cursor:pointer}
+.btn[aria-pressed="true"]{background:var(--signal);color:var(--space);border-color:var(--signal)}
+.flow{stroke-dasharray:5 6;animation:flow 1.1s linear infinite;fill:none}
+@keyframes flow{to{stroke-dashoffset:-22}}
+.ray{stroke:#FFD98A;stroke-width:2;fill:none;transition:opacity .25s}
+.ray.dim{opacity:.15}
+.edge{fill:none;stroke-width:1.6;transition:opacity .2s}
+.edge.dim,.elab.dim{opacity:.12}
+.elab{font-size:8px;transition:opacity .2s}
+.node circle{fill:var(--ink-2);stroke:var(--ice);stroke-width:1.2;cursor:pointer}
+.node.on circle{stroke:var(--signal);stroke-width:2}
+.node text{fill:var(--text);font-size:9.5px;text-anchor:middle;pointer-events:none}
+.node text.s{fill:var(--muted);font-size:8px}
+.c-o2{stroke:var(--o2)} .t-o2{fill:var(--o2)}
+.c-co2{stroke:var(--co2)} .t-co2{fill:var(--co2)}
+.c-food{stroke:var(--food)} .t-food{fill:var(--food)}
+.c-water{stroke:var(--water)} .t-water{fill:var(--water)}
+.c-waste{stroke:var(--waste)} .t-waste{fill:var(--waste)}
+.pbar{margin:6px 0 10px}
+.pbar .row{display:grid;grid-template-columns:88px 1fr;gap:8px;align-items:center;margin:6px 0}
+.pbar .nm{font:500 10.5px/1.2 var(--mono);color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+.pbar .bar{display:flex;height:22px;background:var(--ink-2);border:1px solid var(--line);min-width:0}
+.pbar .bar span{display:block;height:100%;font:500 9.5px/22px var(--mono);color:var(--space);overflow:hidden;white-space:nowrap;padding-left:4px}
+.k-o2{background:var(--o2)} .k-n2{background:var(--n2);color:var(--text)!important} .k-water{background:var(--water)} .k-co2{background:var(--co2)} .k-ar{background:#8C8FA0}
+.legend{display:flex;flex-wrap:wrap;gap:4px 14px;font:400 11px/1.3 var(--mono);color:var(--muted);margin:4px 0 8px}
+.legend i{display:inline-block;width:14px;height:3px;vertical-align:middle;margin-right:5px}
+.steptxt{min-height:3.2em;font-size:14px}
+.chain{display:flex;flex-wrap:wrap;gap:4px 6px;align-items:center;font:500 11px/1.4 var(--mono);color:var(--muted);margin:8px 0 2px}
+.chain span{border:1px solid var(--line);padding:3px 6px;color:var(--text);background:var(--ink-2)}
+.pn{display:flex;justify-content:space-between;gap:10px;margin-top:28px}
+.pn button{flex:1;text-align:left;background:var(--ink-2);border:1px solid var(--line);color:var(--text);padding:10px 12px;cursor:pointer;font:inherit;min-width:0}
+.pn button:last-child{text-align:right}
+.pn small{display:block;font:500 10px/1.3 var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.src{margin-top:30px;padding-top:14px;border-top:1px solid var(--line);font-size:12.5px;color:var(--muted)}
+.src a{color:var(--ice)}
+.src p{margin:0 0 6px!important}
+.fallback{position:absolute;inset:0;display:grid;place-items:center;padding:24px;text-align:center;color:var(--muted)}
+@media (max-width:900px){
+  html,body{height:auto}
+  #app{grid-template-columns:minmax(0,1fr);grid-template-rows:64vh auto;height:auto}
+  #panel{border-left:0;border-top:1px solid var(--line);padding:20px 16px 48px}
+  .spinchip{display:none}
+}
+@media (max-width:520px){
+  .figs{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .plate .sub{display:none}
+  .hud{gap:6px}
+  .seg button,.tog{padding:8px 7px;font-size:10px}
+}
+@media (prefers-reduced-motion:reduce){.flow{animation:none}}
+
+.sets{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:1px;background:var(--line);border:1px solid var(--line);margin:0 0 22px}
+.sets button{background:var(--ink-2);border:0;color:var(--muted);text-align:left;padding:9px 10px 8px;cursor:pointer;font:inherit;min-width:0}
+.sets button b{display:block;font:600 13px/1.15 var(--display);letter-spacing:.04em;text-transform:uppercase;color:var(--text)}
+.sets button small{display:block;font:400 10px/1.3 var(--mono);letter-spacing:.06em;margin-top:3px}
+.sets button:hover{background:#18233A}
+.sets button[aria-current="true"]{background:var(--ice);color:var(--space)}
+.sets button[aria-current="true"] b{color:var(--space)}
+.cmpwrap{overflow-x:auto;border:1px solid var(--line)}
+.cmp{width:100%;border-collapse:collapse;font-size:12.5px;min-width:360px}
+.cmp th,.cmp td{text-align:left;padding:7px 8px;border-top:1px solid var(--line);vertical-align:top;font-variant-numeric:tabular-nums}
+.cmp thead th{border-top:0;font:600 11px/1.2 var(--display);text-transform:uppercase;letter-spacing:.06em;color:var(--ice);background:var(--ink-2)}
+.cmp thead th.on{color:var(--signal)}
+.cmp tbody th{font:500 10px/1.5 var(--mono);text-transform:uppercase;letter-spacing:.08em;color:var(--muted);font-weight:500}
+.cmp td.on{color:#fff}
+.plot .setpt{fill:var(--ink-2);stroke:var(--ice);stroke-width:1.4}
+.plot .setpt.on{stroke:var(--signal);fill:var(--signal)}
+.plot .setl{fill:var(--ice);font-size:8.5px}
+.plot .setl.on{fill:var(--signal)}
+.flow-rev{animation-direction:reverse}
+.mirror{stroke:var(--ice);stroke-width:3;stroke-linecap:round}
+.tog[disabled]{opacity:.35;cursor:default}
+
+/* ---------- Intro screen ---------- */
+html[data-mode="intro"] #app{display:none}
+html[data-mode="app"] #intro{display:none}
+html[data-mode="intro"],html[data-mode="intro"] body{height:auto}
+.intro{max-width:1180px;margin:0 auto;padding-inline:24px;padding-block:0 48px;background:
+  radial-gradient(1px 1px at 12% 18%,#9fb2c9 50%,transparent 51%),radial-gradient(1px 1px at 78% 9%,#9fb2c9 50%,transparent 51%),
+  radial-gradient(1px 1px at 63% 31%,#6d7f96 50%,transparent 51%),radial-gradient(1px 1px at 91% 44%,#9fb2c9 50%,transparent 51%),
+  radial-gradient(1px 1px at 36% 7%,#6d7f96 50%,transparent 51%),radial-gradient(1.5px 1.5px at 52% 14%,#cfdbe8 50%,transparent 51%);
+  background-size:100% 900px;background-repeat:no-repeat}
+.ibar{display:flex;flex-wrap:wrap;gap:10px 24px;align-items:center;justify-content:space-between;padding-block:18px;border-bottom:1px solid var(--line);position:sticky;top:env(safe-area-inset-top,0px);background:color-mix(in srgb,var(--space) 92%,transparent);z-index:5;backdrop-filter:blur(6px)}
+.wordmark{font:600 14px/1 var(--display);letter-spacing:.16em;text-transform:uppercase;color:var(--text);text-decoration:none}
+.inav{display:flex;flex-wrap:wrap;gap:4px 18px}
+.inav a{font:500 11px/1.4 var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--muted);text-decoration:none}
+.inav a:hover,.inav a:focus-visible{color:var(--text)}
+.hero{padding-block:56px 24px}
+.ititle{font:600 clamp(48px,9vw,112px)/.9 var(--display);letter-spacing:.02em;text-transform:uppercase;margin:6px 0 26px;color:#F3F6F9}
+.ilede{font-size:clamp(16px,1.6vw,19px);line-height:1.6;max-width:64ch;margin:0 0 44px;color:var(--text)}
+.pickhead{font:600 14px/1.2 var(--display);letter-spacing:.1em;text-transform:uppercase;color:var(--ice);margin:0 0 14px}
+.cards{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:1px;background:var(--line);border:1px solid var(--line)}
+.card{display:flex;flex-direction:column;gap:6px;text-align:left;background:var(--ink);border:0;color:var(--text);padding:18px 20px 20px;cursor:pointer;font:inherit;min-width:0}
+.card:hover{background:#111b2e}
+.card:hover .go{color:var(--signal)}
+.card:focus-visible{outline:2px solid var(--signal);outline-offset:-2px}
+.card svg{width:100%;height:auto;aspect-ratio:220/140;display:block;margin:0 0 8px}
+.card svg .ln{fill:none;stroke:var(--ice);stroke-width:1.3}
+.card svg .lt{fill:none;stroke:var(--ice);stroke-width:.8;opacity:.55}
+.card svg .ac{fill:none;stroke:var(--signal);stroke-width:1.4}
+.card svg .gr{fill:none;stroke:var(--food);stroke-width:1.6}
+.card svg .fl{fill:var(--ink-2);stroke:var(--ice);stroke-width:1.3}
+.card .tag{font:500 10.5px/1.3 var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.card .nm{font:600 22px/1.1 var(--display);letter-spacing:.03em;text-transform:uppercase}
+.card .ds{font-size:14px;line-height:1.45;color:var(--text);margin:0}
+.card .fx{display:flex;flex-wrap:wrap;gap:4px 14px;font:400 11.5px/1.4 var(--mono);color:var(--muted);margin-top:4px;font-variant-numeric:tabular-nums}
+.card .fx b{color:var(--text);font-weight:500}
+.card .go{margin-top:auto;padding-top:12px;font:500 11px/1 var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--ice)}
+.cards.compact .card svg{display:none}
+.cards.compact .card .ds,.cards.compact .card .fx{display:none}
+.cards.compact{margin-top:22px}
+.isec{padding-block:64px 8px;border-top:1px solid var(--line);margin-top:48px}
+.sechead{display:flex;align-items:baseline;gap:14px;margin:0 0 22px}
+.secno{font:500 12px/1 var(--mono);color:var(--signal);letter-spacing:.08em}
+.sechead h2{font:600 clamp(22px,2.8vw,32px)/1.1 var(--display);letter-spacing:.03em;text-transform:uppercase;margin:0;text-wrap:balance}
+.cols{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:40px;align-items:start}
+.prose p,.prose.wide{font-size:16px;line-height:1.65;max-width:66ch;margin:0 0 16px}
+.prose.wide{margin-bottom:22px}
+cite{font-style:italic}
+.wells{border:1px solid var(--line);background:var(--ink);padding:16px 16px 14px}
+.well{display:grid;grid-template-columns:52px 1fr auto;gap:10px;align-items:center;margin:10px 0}
+.wn{font:500 11px/1 var(--mono);text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}
+.wb{height:14px;background:var(--ink-2);border:1px solid var(--line);min-width:0}
+.wb i{display:block;height:100%;background:var(--ice);min-width:2px}
+.wv{font:500 12px/1 var(--mono);font-variant-numeric:tabular-nums}
+.wnote{font-size:13px;color:var(--muted);margin:12px 0 0}
+.timeline{list-style:none;margin:36px 0 0;padding:0;display:grid;grid-template-columns:repeat(9,minmax(120px,1fr));gap:0;overflow-x:auto;border-top:1px solid var(--ice);padding-bottom:6px}
+.timeline li{position:relative;padding:16px 14px 0 0;min-width:0}
+.timeline li::before{content:"";position:absolute;top:-4px;left:0;width:7px;height:7px;background:var(--space);border:1px solid var(--ice);transform:rotate(45deg)}
+.timeline li:nth-last-child(-n+3)::before{background:var(--signal);border-color:var(--signal)}
+.timeline b{display:block;font:600 16px/1 var(--display);letter-spacing:.04em;margin-bottom:6px}
+.timeline span{display:block;font-size:12.5px;line-height:1.4;color:var(--muted)}
+.mapwrap{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:28px;align-items:start}
+.mapcol{min-width:0}
+.emap{width:100%;height:auto;display:block;background:var(--ink);border:1px solid var(--line);margin-top:8px}
+.emap text{font-family:var(--mono)}
+.emap .orb{fill:none;stroke:var(--line);stroke-width:1.2}
+.emap .orb2{fill:none;stroke:var(--n2);stroke-width:1;stroke-dasharray:3 5}
+.emap .stab{fill:var(--o2);fill-opacity:.07;stroke:var(--o2);stroke-opacity:.5;stroke-dasharray:2 4}
+.emap .lab{fill:var(--muted);font-size:11px;letter-spacing:.06em}
+.emap .pt{cursor:pointer}
+.emap .pt .hit{fill:transparent}
+.emap .pt .mk{fill:var(--space);stroke:var(--ice);stroke-width:1.4}
+.emap .pt text{fill:var(--ice);font-size:12px;font-weight:500;letter-spacing:.06em}
+.emap .pt:hover .mk,.emap .pt:focus-visible .mk{stroke:#fff}
+.emap .pt.on .mk{fill:var(--signal);stroke:var(--signal)}
+.emap .pt.on text{fill:var(--signal)}
+.emap .pt:focus{outline:none}
+.emap .rt{fill:none;stroke:#FFD98A;stroke-width:2;stroke-dasharray:5 6;animation:flow 1.1s linear infinite;transition:opacity .25s}
+.emap .rt.dim{opacity:.12}
+.emap .rtl{fill:#FFD98A;font-size:11px}
+.emap .scale{stroke:var(--muted);stroke-width:1}
+.mapnote{font-size:12.5px;color:var(--muted);margin:8px 0 0}
+.mapinfo{border:1px solid var(--line);background:var(--ink);padding:18px 18px 16px;min-height:220px}
+.mapinfo h3{font:600 20px/1.15 var(--display);letter-spacing:.03em;text-transform:uppercase;margin:4px 0 10px}
+.mapinfo p{font-size:14.5px;line-height:1.55;margin:0 0 12px}
+.mapinfo dl{display:grid;grid-template-columns:auto 1fr;gap:4px 12px;margin:8px 0 0;font-size:13px}
+.mapinfo dt{font:500 10.5px/1.6 var(--mono);text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}
+.mapinfo dd{margin:0;font-variant-numeric:tabular-nums}
+.mapinfo .steps{display:flex;flex-wrap:wrap;gap:6px;margin:4px 0 12px}
+.needs{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:1px;background:var(--line);border:1px solid var(--line);margin-bottom:24px}
+.needs div{background:var(--ink);padding:16px 16px 6px;min-width:0}
+.needs b{font:600 14px/1.25 var(--display);letter-spacing:.05em;text-transform:uppercase;color:var(--ice)}
+.needs p{font-size:14px;line-height:1.5;margin:8px 0 10px}
+.ifoot{margin-top:56px;padding-top:16px;border-top:1px solid var(--line);font-size:13px;color:var(--muted)}
+.ifoot a{color:var(--ice)}
+.home{display:inline-block;background:none;border:0;color:var(--ice);font:500 11px/1 var(--mono);letter-spacing:.1em;text-transform:uppercase;padding:2px 0;margin:0 0 14px;cursor:pointer}
+.home:hover{color:#fff}
+@media (max-width:980px){.cols,.mapwrap{grid-template-columns:minmax(0,1fr)}.needs{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:720px){.cards{grid-template-columns:minmax(0,1fr)}.intro{padding-inline:16px}.hero{padding-block:36px 16px}.needs{grid-template-columns:minmax(0,1fr)}.inav{display:none}}
+
+/* ---------- Topic pages ---------- */
+html[data-mode="intro"] #pages,html[data-mode="app"] #pages{display:none}
+html[data-mode="page"] #app,html[data-mode="page"] #intro{display:none}
+html[data-mode="page"],html[data-mode="page"] body{height:auto}
+html:not([data-mode]) #pages{display:none}
+.tpage{padding-block:40px 24px}
+.ptitle{font:600 clamp(36px,6vw,68px)/.95 var(--display);letter-spacing:.02em;text-transform:uppercase;margin:6px 0 20px;color:#F3F6F9;text-wrap:balance}
+.panelgrid{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:28px;align-items:start;margin-top:8px}
+.pmain,.pside{min-width:0}
+.pside{display:grid;gap:16px}
+.pbox{border:1px solid var(--line);background:var(--ink);padding:16px 16px 12px;min-width:0}
+.pbox p{font-size:14.5px;line-height:1.55;margin:0 0 10px}
+.pbox .note{font-size:12.5px}
+.cols3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;margin-top:24px}
+.chead{display:flex;flex-wrap:wrap;gap:4px 14px;align-items:baseline;margin:8px 0 6px}
+.chead b{font:600 14px/1.2 var(--display);letter-spacing:.08em;text-transform:uppercase;color:var(--ice)}
+.chead span{font:400 11.5px/1.3 var(--mono);color:var(--muted)}
+.pchart{width:100%;height:auto;display:block;background:var(--ink);border:1px solid var(--line);margin:4px 0 8px}
+.pchart text{font-family:var(--mono)}
+.pchart .grid{stroke:var(--line);stroke-width:1}
+.pchart .zero{stroke:var(--muted);stroke-width:1}
+.pchart .tick{fill:var(--muted);font-size:10px}
+.pchart .lab{fill:var(--muted);font-size:10.5px}
+.pchart .lab2{fill:var(--text);font-size:11px}
+.pchart .neg{fill:#C4664E}
+.pchart .pos{fill:var(--food)}
+.pchart .bar.sel{stroke:#fff;stroke-width:1.5}
+.pchart .ms{stroke:var(--ice);stroke-dasharray:2 3;stroke-width:1}
+.pchart .mst{fill:var(--ice);font-size:9.5px}
+.pchart .ln1{fill:none;stroke:var(--ice);stroke-width:2}
+.pchart .ln2{fill:none;stroke:var(--signal);stroke-width:2.2}
+.pchart .ln3{fill:none;stroke:var(--o2);stroke-width:2;stroke-dasharray:5 4}
+.pchart .area{fill:var(--food);opacity:.18}
+.pchart .box{fill:var(--ink-2);stroke:var(--ice);stroke-width:1.2}
+.pchart .boxt{fill:var(--text);font-size:11.5px}
+.pchart .boxs{fill:var(--muted);font-size:10px}
+.pchart .arrow{stroke:#FFD98A;stroke-width:2.2;fill:none}
+.pchart .eff{fill:#FFD98A;font-size:11px}
+.pchart .track{stroke:var(--ice);stroke-width:2}
+.pchart .rail{stroke:var(--line);stroke-width:2}
+.pchart .seg{fill:var(--ice);font-size:10px}
+.pchart .bucket{fill:var(--signal)}
+.pchart .bucket2{fill:var(--muted)}
+.pchart .pay{fill:#d9c9a8}
+.pchart .moon{fill:#2a2f38;stroke:var(--line)}
+.readout.one{grid-template-columns:minmax(0,1fr)}
+.phases{list-style:none;margin:0;padding:0;border:1px solid var(--line);background:var(--ink)}
+.phases li{padding:9px 12px;border-top:1px solid var(--line);font-size:13.5px;line-height:1.4;color:var(--muted)}
+.phases li:first-child{border-top:0}
+.phases li b{display:block;font:500 10.5px/1.5 var(--mono);letter-spacing:.08em;text-transform:uppercase}
+.phases li.on{color:var(--text);background:var(--ink-2);box-shadow:inset 3px 0 0 var(--signal)}
+.phases li.done{color:var(--text)}
+.checks{list-style:none;margin:0;padding:0;border:1px solid var(--line);background:var(--ink)}
+.checks li{display:grid;grid-template-columns:22px 1fr;gap:8px;padding:9px 12px;border-top:1px solid var(--line);font-size:13.5px;line-height:1.4}
+.checks li:first-child{border-top:0}
+.checks .st{font:600 11px/1.7 var(--mono)}
+.checks .ok{color:var(--food)}.checks .warn{color:var(--signal)}.checks .bad{color:#E07A64}
+.checks small{display:block;color:var(--muted);font-size:12px}
+.tourbox{position:absolute;left:50%;transform:translateX(-50%);bottom:66px;width:min(560px,calc(100% - 32px));background:color-mix(in srgb,var(--ink) 94%,transparent);border:1px solid var(--line);border-top:2px solid var(--signal);padding:14px 16px 6px;z-index:4}
+.tourbox h3{font:600 18px/1.2 var(--display);letter-spacing:.04em;text-transform:uppercase;margin:2px 0 8px}
+.tourbox .tq{font-size:15px;line-height:1.55;margin:0 0 6px}
+.btn[disabled]{opacity:.4;cursor:default}
+.topics{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:1px;background:var(--line);border:1px solid var(--line)}
+.topic{display:flex;flex-direction:column;gap:6px;background:var(--ink);padding:16px 16px 18px;color:var(--text);text-decoration:none;min-width:0}
+.topic:hover{background:#111b2e}
+.topic .tag{font:500 10.5px/1.3 var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--signal)}
+.topic b{font:600 18px/1.15 var(--display);letter-spacing:.03em;text-transform:uppercase}
+.topic span:last-child{font-size:13.5px;line-height:1.45;color:var(--muted)}
+.cards{grid-template-columns:repeat(auto-fill,minmax(200px,1fr))!important}
+.sets{grid-template-columns:repeat(auto-fit,minmax(110px,1fr))!important}
+@media (max-width:980px){.panelgrid{grid-template-columns:minmax(0,1fr)}.cols3{grid-template-columns:minmax(0,1fr)}}
+
+.cols3.c4{grid-template-columns:repeat(4,minmax(0,1fr))}
+@media (max-width:980px){.cols3.c4{grid-template-columns:repeat(2,minmax(0,1fr))}}
+[hidden]{display:none!important}
+
+.wordmark .wmp{display:block;font:500 9.5px/1.4 var(--mono);letter-spacing:.14em;color:var(--muted);margin-top:5px}
+.wmfoot{color:var(--text);margin:0 0 8px}
+.wmfoot b{font:600 12px/1 var(--display);letter-spacing:.1em;text-transform:uppercase}
+
+html:not([data-mode]) #app{display:none}
+</style>
+</head>
+<body>
+<main id="intro" class="intro">
+  <header class="ibar">
+    <a class="wordmark" href="#intro">Space Settlements<span class="wmp">A Worldmaking Project atlas</span></a>
+    <nav class="inav" aria-label="Sections"><a href="#intro" data-jump="i-idea">The idea</a><a href="#intro" data-jump="i-where">Locations</a><a href="#intro" data-jump="i-needs">Principles</a><a href="#intro" data-jump="i-topics">Topics</a><a href="#intro" data-jump="i-pick">Habitats</a></nav>
+  </header>
+
+  <section class="hero">
+    <p class="eyebrow">The Worldmaking Project · An atlas of rotating worlds, 1969–1977</p>
+    <h1 class="ititle">Space<br>Settlements</h1>
+    <p class="ilede">In the autumn of 1969 the physicist Gerard O’Neill put a question to a small seminar of Princeton freshmen: is a planetary surface the right place for an expanding technological civilization? Over the next eight years the question grew into a body of engineering, a set of settlements built in free space from lunar material, rotating for gravity, lit by mirrors, and large enough for towns, farms and a sky. This atlas opens five of those designs so you can examine how they work, and follows the economy, energy and industry meant to pay for them.</p>
+    <h2 class="pickhead" id="i-pick">Choose a habitat to examine</h2>
+    <div class="cards" id="cards"></div>
+  </section>
+
+  <section class="isec" id="i-idea">
+    <div class="sechead"><span class="secno">01</span><h2>Why build in free space</h2></div>
+    <div class="cols">
+      <div class="prose">
+        <p>O’Neill’s seminar started from three observations. In space, solar energy is available all the time, with no night and no weather. Planets add surprisingly little room: settling the Moon and Mars would hardly more than double humanity’s land, and at the growth rates of the time that increase would be used up in about thirty-five years. And building material is far cheaper to lift from the Moon, whose gravity well is 22 times shallower than Earth’s.</p>
+        <p>So the land itself would be built. A rotating vessel presses its contents against its outer wall, which becomes a floor with gravity. The group considered three shapes for such a vessel, the sphere, the cylinder and the wheel, and their first calculation surprised them: a steel shell spinning for Earth gravity and loaded with soil and air could be several miles across.</p>
+        <p>In the summer of 1975, NASA’s Ames Research Center and Stanford University ran a ten-week study that worked the idea out as a complete system for 10,000 people, published in 1977 as <cite>Space Settlements: A Design Study</cite>. Its authors concluded that the obstacles were “principally philosophical, political, and social rather than technological.” O’Neill’s book <cite>The High Frontier</cite> (1976) carried the idea to a wide audience through a sequence of designs he called Island One, Two and Three.</p>
+        <p>Both works tie the settlements to an economy. The colonists refine aluminum, titanium and silicon from lunar ore and build solar power satellites, an idea Peter Glaser introduced in 1968, which send electricity to Earth. Sales of that power were meant to pay for the first colony and for the ones that followed.</p>
+      </div>
+      <aside class="wells" aria-label="Energy to escape each body">
+        <p class="eyebrow">Energy to escape, per kilogram</p>
+        <div class="well"><span class="wn">Earth</span><span class="wb"><i style="width:100%"></i></span><span class="wv">62.6 MJ</span></div>
+        <div class="well"><span class="wn">Moon</span><span class="wb"><i style="width:4.5%"></i></span><span class="wv">2.8 MJ</span></div>
+        <p class="wnote">Escape speed 11.2 km/s from Earth and 2.4 km/s from the Moon. The 22-fold difference is why the studies quarry the Moon.</p>
+      </aside>
+    </div>
+    <ol class="timeline" aria-label="History of the idea">
+      <li><b>1869</b><span>Edward Everett Hale, <cite>The Brick Moon</cite>: a brick sphere launched by accident, its workers settling in for good</span></li>
+      <li><b>1903</b><span>Konstantin Tsiolkovsky adds rotation for gravity, solar energy and a space greenhouse</span></li>
+      <li><b>1929</b><span>Herman Potočnik (Noordung) proposes the 30 m <i>Wohnrad</i>, the living wheel</span></li>
+      <li><b>1929</b><span>J. D. Bernal imagines self-contained spherical worlds in <cite>The World, the Flesh and the Devil</cite></span></li>
+      <li><b>1952</b><span>Wernher von Braun enlarges the wheel to 76 m for an orbit 1,730 km up</span></li>
+      <li><b>1969</b><span>O’Neill’s Physics 103 seminar at Princeton asks where civilization should expand</span></li>
+      <li><b>1974</b><span>O’Neill first publishes the space colony studies</span></li>
+      <li><b>1975</b><span>NASA Ames and Stanford summer study designs the Stanford Torus</span></li>
+      <li><b>1976</b><span>O’Neill’s <cite>The High Frontier</cite> presents Island One and Island Three</span></li>
+    </ol>
+  </section>
+
+  <section class="isec" id="i-where">
+    <div class="sechead"><span class="secno">02</span><h2>The geography of the Earth–Moon system</h2></div>
+    <p class="prose wide">Gravity shapes empty space into terrain. Earth and the Moon sit at the bottom of deep wells, and between them lie five shallow valleys where their pulls balance the rotation of the whole system, the Lagrangian libration points. Three of them are saddles that need constant station keeping. The other two, L4 and L5, lie on the Moon’s own orbit, each as far from Earth as from the Moon, and an object nudged away in any direction drifts back. The 1975 study put its colony at L5 and called the choice somewhat arbitrary, since L4 is almost identical.</p>
+    <div class="mapwrap">
+      <div class="mapcol">
+        <div class="btnrow" role="group" aria-label="Map layer"><button type="button" class="btn" id="mPlaces" aria-pressed="true">Places</button><button type="button" class="btn" id="mRoute" aria-pressed="false">Supply route</button></div>
+        <svg id="emap" class="emap" viewBox="0 0 620 520" role="img" aria-label="Map of the Earth–Moon system in a frame turning with the Moon, showing the five Lagrange points"></svg>
+        <p class="mapnote">Drawn in a frame that turns with the Moon, so the Moon and the five points hold still. Distances to scale; Earth and Moon enlarged.</p>
+      </div>
+      <div class="mapinfo" id="minfo" aria-live="polite"></div>
+    </div>
+  </section>
+
+  <section class="isec" id="i-needs">
+    <div class="sechead"><span class="secno">03</span><h2>What every settlement has to solve</h2></div>
+    <div class="needs">
+      <div><b>Gravity by rotation</b><p>Spin presses everything against the outer wall. A larger radius allows a slower, more comfortable spin, which is why the designs are so big.</p></div>
+      <div><b>Shielding by mass</b><p>Cosmic rays are stopped by several tonnes of material over every square meter, usually lunar soil, so shielding becomes most of a settlement’s mass.</p></div>
+      <div><b>Sunlight by mirror</b><p>Mirrors carry daylight in while the structure blocks straight-line radiation, and their angles set the length of the day.</p></div>
+      <div><b>A closed loop, and heat out</b><p>Air, water and food cycle between people, crops and animals. Everything that comes in as energy leaves as heat from radiators.</p></div>
+    </div>
+    <p class="prose wide">Each habitat sheet in the atlas has live diagrams for these systems, scaled to that design.</p>
+    <div class="cards compact" id="cards2"></div>
+  </section>
+
+  <section class="isec" id="i-topics">
+    <div class="sechead"><span class="secno">04</span><h2>The system around the habitats</h2></div>
+    <p class="prose wide">A habitat was only one part of the 1975 plan. The rest was an industrial system reaching from a mine on the Moon to power stations over Earth, and an economy meant to pay for it all.</p>
+    <div class="topics">
+      <a class="topic" href="#economy"><span class="tag">Topic 01</span><b>Paying for the colony</b><span>Year-by-year cash flow, discount rates and payback.</span></a>
+      <a class="topic" href="#energy"><span class="tag">Topic 02</span><b>Power from orbit</b><span>Solar power satellites, microwave beams and demand on Earth.</span></a>
+      <a class="topic" href="#massdriver"><span class="tag">Topic 03</span><b>Throwing the Moon</b><span>The lunar base, the mass driver and the catcher at L2.</span></a>
+      <a class="topic" href="#build"><span class="tag">Topic 04</span><b>Building the first colony</b><span>Twenty-two years from research to 10,000 residents.</span></a>
+      <a class="topic" href="#design"><span class="tag">Topic 05</span><b>Design your own habitat</b><span>Test a shape against the study’s human criteria.</span></a>
+    </div>
+  </section>
+
+  <footer class="ifoot">
+    <p class="wmfoot"><b>Space Settlements</b> is part of the Worldmaking Project by Damjan Jovanovic.</p>
+    <p>Sources: NASA SP-413, <a href="https://nss.org/settlement/nasa/75SummerStudy/Table_of_Contents1.html" target="_blank" rel="noopener">Space Settlements: A Design Study</a> (1977), chapters 1, 2, 4 and 5; Gerard K. O’Neill, <a href="https://en.wikipedia.org/wiki/The_High_Frontier:_Human_Colonies_in_Space" target="_blank" rel="noopener">The High Frontier: Human Colonies in Space</a> (1976).</p>
+  </footer>
+</main>
+
+<main id="pages" class="intro tpages">
+  <header class="ibar">
+    <a class="wordmark" href="#intro">Space Settlements<span class="wmp">A Worldmaking Project atlas</span></a>
+    <nav class="inav" aria-label="Topics"><a href="#economy">Economy</a><a href="#energy">Energy</a><a href="#massdriver">Mass driver</a><a href="#build">Building it</a><a href="#design">Design your own</a></nav>
+  </header>
+
+  <section class="tpage" id="p-economy" hidden>
+    <p class="eyebrow">Topic 01 · Economy · SP-413 chapter 6</p>
+    <h1 class="ptitle">Paying for the colony</h1>
+    <p class="prose wide">The 1975 study justified the colony with one product, solar power satellites built from lunar material and sold to Earth as electricity. Its authors admitted the risk: “it is a definite weakness of the design to depend entirely on this one particular enterprise.” Their program runs year by year from research on Earth in 1976 to a completed colony in year 22, with every figure in 1975 dollars.</p>
+    <div class="panelgrid">
+      <div class="pmain">
+        <div class="chead"><b>Annual cash flow, benefits minus costs</b><span>billions of 1975 dollars · program years 1–45 (1976–2020)</span></div>
+        <svg id="ec-bars" class="pchart" viewBox="0 0 760 300" role="img" aria-label="Annual cash flow by program year"></svg>
+        <div class="ctrl"><label for="ec-year">Program year</label><output id="ec-yo"></output><input id="ec-year" type="range" min="1" max="45" step="1" value="28"></div>
+        <div class="chead" style="margin-top:22px"><b>Running total</b><span>cumulative cash flow, undiscounted and discounted</span></div>
+        <svg id="ec-cum" class="pchart" viewBox="0 0 760 280" role="img" aria-label="Cumulative cash flow, undiscounted and discounted"></svg>
+        <div class="ctrl"><label for="ec-rate">Real discount rate</label><output id="ec-ro"></output><input id="ec-rate" type="range" min="0" max="12" step="0.5" value="10"></div>
+      </div>
+      <aside class="pside">
+        <div class="pbox" id="ec-read"></div>
+        <div class="pbox">
+          <p class="eyebrow">What the study concluded</p>
+          <p>Annual benefits exceed costs in year 28. Over its 70-year horizon the benefit-to-cost ratio is 1.02 at a 10 percent discount rate, the federal standard of the time, and 1.5 at 8 percent. Developing a second-generation shuttle from year 3 instead of year 15 raises the ratio to 1.3 and cuts the first colony’s cost from $196.9 billion to $112.7 billion, at the price of heavier spending early.</p>
+          <p class="note">The chart covers 45 years from the study’s Table 6-12, so its discounted totals will not match the 70-year ratios exactly.</p>
+        </div>
+      </aside>
+    </div>
+    <div class="cols3">
+      <div class="pbox">
+        <p class="eyebrow">Where $190.8 billion goes</p>
+        <div id="ec-break"></div>
+        <p class="note">Baseline estimate, research through the first colony, with 20 percent overhead. Transportation dominates.</p>
+      </div>
+      <div class="pbox">
+        <p class="eyebrow">The product</p>
+        <p>Each 10 GW power satellite earns about $1.17 billion a year sold in the US. Electricity at the busbar starts at 8.5 mils per kWh and falls to 4.8 mils by year 70, against a target of 14.1 mils set by coal and nuclear plants of 1974.</p>
+        <p class="note">1 mil = 0.1 cent.</p>
+      </div>
+      <div class="pbox">
+        <p class="eyebrow">Learning curves</p>
+        <p>After the first, each power satellite costs about $9.73 billion, or $6.76 billion once the new shuttle flies, and each further colony about $9.24 billion. Both fall along 80 percent learning curves: every doubling of output cuts the variable cost by a fifth.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="tpage" id="p-energy" hidden>
+    <p class="eyebrow">Topic 02 · Energy · SP-413 chapters 4 and 6</p>
+    <h1 class="ptitle">Power from orbit</h1>
+    <p class="prose wide">A solar power satellite in geosynchronous orbit sees the Sun almost all the time and sends its output to the ground as a microwave beam. The idea came from Peter Glaser in 1968. The study weighed two designs, a photovoltaic one and a turbogenerator one, and judged the turbogenerator preferable because it relied on technology already in use, without making a final choice.</p>
+    <div class="btnrow" role="group" aria-label="Satellite design"><button type="button" class="btn" id="en-pv" aria-pressed="false">Photovoltaic (Glaser)</button><button type="button" class="btn" id="en-th" aria-pressed="true">Turbogenerator (Woodcock)</button></div>
+    <svg id="en-chain" class="pchart" viewBox="0 0 1100 230" role="img" aria-label="Energy chain from sunlight to the power grid"></svg>
+    <div class="cols3 c4" id="en-facts"></div>
+    <div class="panelgrid" style="margin-top:28px">
+      <div class="pmain">
+        <div class="chead"><b>Capacity against demand</b><span>gigawatts · program years 15–45</span></div>
+        <svg id="en-cap" class="pchart" viewBox="0 0 760 290" role="img" aria-label="Power satellite capacity compared with US electricity demand"></svg>
+        <p class="note">Capacity counts the 10 GW satellites in use from the study’s Table 6-12. US demand starts from 224 GW in 1975 and grows 5 percent a year, the study’s assumption. About a third of the power was planned for export.</p>
+      </div>
+      <aside class="pside">
+        <div class="pbox">
+          <p class="eyebrow">How strong is the beam?</p>
+          <svg id="en-beam" class="pchart" viewBox="0 0 340 250" role="img" aria-label="Microwave power density comparisons on a logarithmic scale"></svg>
+          <p class="note">Milliwatts per square centimeter, logarithmic. Peak density at the receiving antenna is 10 to 100 mW/cm², falling to 10 µW/cm² about 10 to 15 km from the beam’s center. A fence and metal screen keep people out of the center.</p>
+        </div>
+      </aside>
+    </div>
+    <div class="pbox" style="margin-top:22px">
+      <p class="eyebrow">Power for the settlements themselves</p>
+      <p>The torus runs on 50 MW from solar cells stretched between its spokes, 3 kW for each resident, and a 200 MW solar plant powers fabrication. The lunar base needs 200 MW, almost all of it (192 MW) for the mass driver, and two complete launchers keep shipping through the two-week lunar night. Later in the program a power satellite at L1 beams energy to the Moon on a 3 cm wavelength into a 27 km² receiving antenna.</p>
+    </div>
+  </section>
+
+  <section class="tpage" id="p-massdriver" hidden>
+    <p class="eyebrow">Topic 03 · Mass driver · SP-413 chapter 5 and appendices F–I</p>
+    <h1 class="ptitle">Throwing the Moon</h1>
+    <p class="prose wide">Ten million tonnes of lunar soil go into the first colony. The study’s mining base sits near the Apollo 16 landing site in the Cayley region, chosen for aluminum-rich ore and flat ground. Ore is compacted into small blocks, loaded into buckets with superconducting coils, and accelerated along a magnetic track at about 30 g until it leaves the Moon at 2.4 km/s, bound for a catcher at L2.</p>
+    <div class="chead"><b>The launch track</b><span>horizontal distances compressed; buckets run in real time</span></div>
+    <svg id="md-track" class="pchart" viewBox="0 0 760 160" role="img" aria-label="Animated side view of the mass driver track"></svg>
+    <div class="panelgrid">
+      <div class="pmain">
+        <div class="ctrl"><label for="md-m">Payload per bucket</label><output id="md-mo"></output><input id="md-m" type="range" min="1" max="30" step="1" value="10"></div>
+        <div class="ctrl"><label for="md-r">Launches per second</label><output id="md-ro"></output><input id="md-r" type="range" min="1" max="5" step="1" value="5"></div>
+        <div class="ctrl"><label for="md-d">Duty cycle</label><output id="md-do"></output><input id="md-d" type="range" min="20" max="100" step="5" value="70"></div>
+        <dl class="readout" id="md-read"></dl>
+      </div>
+      <aside class="pside">
+        <div class="pbox">
+          <p class="eyebrow">Hitting the catcher</p>
+          <svg id="md-aim" class="pchart" viewBox="0 0 320 240" role="img" aria-label="Payload scatter around the catcher at L2"></svg>
+          <div class="ctrl"><label for="md-e">Release speed error</label><output id="md-eo"></output><input id="md-e" type="range" min="-5" max="-1" step="0.1" value="-3"></div>
+          <p class="note">A straight-line estimate: miss distance ≈ speed error × flight time, with the study’s fast transfers of about 48 to 77 hours. The real trajectory is more sensitive. The study held errors to 10⁻³ m/s across the path and 10⁻⁴ m/s along it.</p>
+        </div>
+      </aside>
+    </div>
+    <div class="cols3">
+      <div class="pbox"><p class="eyebrow">The lunar base</p><p>A pit about 2 km across and 10 m deep, worked by scooper-loaders at about 4 t a minute. A construction crew of 300 builds the base, and 150 people run it, on two-year tours in prefabricated quarters buried under 5 m of lunar soil. Its 200 MW plant is nuclear, so launches continue through the lunar night.</p></div>
+      <div class="pbox"><p class="eyebrow">The catcher</p><p>A thin net of 10 m², steered by three cables across a triangle 1 km on a side, tracks each 10 kg block by radar from 2 km out and slows it from 200 to 20 m/s. Each catcher weighs about 220 t. Five were planned for 11 million tonnes in ten years, and ore carriers then take about two months to reach L5.</p></div>
+      <div class="pbox"><p class="eyebrow">Rejected: the gas gun</p><p>The study also costed a lunar gas gun firing 57 t projectiles twice an hour. It needed less equipment on the Moon, but an error of ±0.5 m/s scattered payloads over a circle about 1,000 km wide, to be rounded up by 50 interceptor rockets.</p></div>
+    </div>
+  </section>
+
+  <section class="tpage" id="p-build" hidden>
+    <p class="eyebrow">Topic 04 · Construction · SP-413 chapter 6</p>
+    <h1 class="ptitle">Building the first colony</h1>
+    <p class="prose wide">The study planned 22 years from the start of research to a finished colony: research on Earth, tests in low orbit, then a lunar base, mass driver, catcher and construction shack at L5, six years of habitat construction, and four for the shield and the arrival of colonists. Phases overlap; the years below are placed from the study’s stated durations and milestones.</p>
+    <div class="panelgrid">
+      <div class="pmain">
+        <svg id="bd-draw" class="pchart" viewBox="0 0 760 420" role="img" aria-label="Schematic of the colony and supply system at the selected year"></svg>
+        <div class="ctrl"><label for="bd-y">Program year</label><output id="bd-yo"></output><input id="bd-y" type="range" min="1" max="23" step="1" value="1"></div>
+        <div class="btnrow"><button type="button" class="btn" id="bd-play">Play 22 years</button></div>
+      </div>
+      <aside class="pside">
+        <dl class="readout one" id="bd-read"></dl>
+        <ol class="phases" id="bd-ph"></ol>
+      </aside>
+    </div>
+  </section>
+
+  <section class="tpage" id="p-design" hidden>
+    <p class="eyebrow">Topic 05 · Studio · after SP-413 chapters 3 and 4</p>
+    <h1 class="ptitle">Design your own habitat</h1>
+    <p class="prose wide">The study chose its torus by testing shapes against a list of human needs: 0.95 ± 0.05 g, no more than 1 rpm, 0.5 rem a year, and 67 m² of projected area per person. Set a shape and its dimensions, see which criteria it meets, and place it beside the designs the study and O’Neill compared.</p>
+    <div class="btnrow" id="dz-pre" role="group" aria-label="Presets"></div>
+    <div class="panelgrid">
+      <div class="pmain">
+        <div class="btnrow" role="group" aria-label="Shape"><button type="button" class="btn" data-shape="torus">Torus</button><button type="button" class="btn" data-shape="sphere">Sphere</button><button type="button" class="btn" data-shape="cylinder">Cylinder</button></div>
+        <div class="ctrl"><label for="dz-R">Radius of rotation</label><output id="dz-Ro"></output><input id="dz-R" type="range" min="1.5" max="4" step="0.005" value="2.919"></div>
+        <div class="ctrl" id="dz-rwrap"><label for="dz-r">Tube radius</label><output id="dz-ro"></output><input id="dz-r" type="range" min="10" max="400" step="1" value="65"></div>
+        <div class="ctrl" id="dz-lwrap"><label for="dz-L">Cylinder length</label><output id="dz-Lo"></output><input id="dz-L" type="range" min="2" max="4.7" step="0.01" value="3.95"></div>
+        <div class="ctrl"><label for="dz-w">Spin rate</label><output id="dz-wo"></output><input id="dz-w" type="range" min="0.2" max="6" step="0.01" value="1"></div>
+        <div class="ctrl"><label for="dz-s">Shield areal mass</label><output id="dz-so"></output><input id="dz-s" type="range" min="0" max="10" step="0.1" value="4.5"></div>
+        <div class="ctrl"><label for="dz-a">Projected area per person</label><output id="dz-ao"></output><input id="dz-a" type="range" min="20" max="120" step="1" value="67"></div>
+        <svg id="dz-sec" class="pchart" viewBox="0 0 760 200" role="img" aria-label="Section drawing of the habitat"></svg>
+      </div>
+      <aside class="pside">
+        <ul class="checks" id="dz-checks"></ul>
+        <dl class="readout" id="dz-read"></dl>
+      </aside>
+    </div>
+    <div class="chead"><b>Mass per person against population</b><span>structure plus shield · logarithmic axes</span></div>
+    <svg id="dz-cmp" class="pchart" viewBox="0 0 1100 340" role="img" aria-label="Your design compared with historical designs"></svg>
+    <p class="note">Structure is a membrane estimate for aluminum at 200 MPa working stress holding 50.8 kPa of air, including the hull’s own spin weight. It reproduces the study’s sphere (3.5 Mt) and lands below its torus (150 kt), which carries additional internal loads. Shield area adds 2 m of clearance. Comparison points come from SP-413 Tables 4-1 and 4-2 and from The High Frontier.</p>
+  </section>
+  <footer class="ifoot"><p class="wmfoot"><b>Space Settlements</b> is part of the Worldmaking Project by Damjan Jovanovic.</p></footer>
+</main>
+
+<div id="app">
+  <section id="stage" aria-label="3D cutaway">
+    <canvas id="gl"></canvas>
+    <svg id="leaders" aria-hidden="true"></svg>
+    <div id="labels"></div>
+    <div class="plate">
+      <p class="eyebrow" id="plEyebrow">Space Settlements</p>
+      <h1 id="plName">Stanford Torus</h1>
+      <div class="sub" id="plSub"></div>
+    </div>
+    <div class="tourbox" id="tourbox" hidden></div>
+    <div class="hud" role="toolbar" aria-label="View controls">
+      <div class="seg" role="group" aria-label="Rotation">
+        <button id="sp0" aria-pressed="false">Pause</button>
+        <button id="sp1" aria-pressed="true">Real time</button>
+        <button id="sp10" aria-pressed="false">×10</button>
+      </div>
+      <button class="tog" id="tTour" aria-pressed="false">Tour</button>
+      <button class="tog" id="tCut" aria-pressed="true">Cutaway</button>
+      <button class="tog" id="tShield" aria-pressed="true">Shield</button>
+      <button class="tog" id="tLbl" aria-pressed="true">Callouts</button>
+      <button class="tog" id="tReset" aria-pressed="false">Reset view</button>
+    </div>
+    <div class="spinchip" id="spinchip"></div>
+  </section>
+  <aside id="panel" class="panel" aria-live="polite"></aside>
+</div>
+
+<noscript><p style="padding:24px">Space Settlements needs JavaScript and WebGL to draw its 3D cutaways.</p></noscript>
+<script src="vendor/three.min.js"></script>
+<script src="vendor/OrbitControls.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
